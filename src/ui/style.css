@@ -1,0 +1,373 @@
+:root {
+    --bg: #f4f4f6;
+    --panel: #ffffff;
+    --panel-2: #f8f8fa;
+    --border: #e3e3e8;
+    --text: #1f1f24;
+    --muted: #6b6b75;
+    --accent: #0066ff;
+    --accent-soft: #e8f0ff;
+    --danger: #d44a3e;
+    --warn: #d68b00;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+}
+
+#app {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    height: 100vh;
+    width: 100vw;
+}
+
+#sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#sidebar > * {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+#sidebar > footer {
+    border-bottom: none;
+    margin-top: auto;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+#sidebar h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+#sidebar h2 {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tagline {
+    margin: 4px 0 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.tagline code {
+    background: var(--panel-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.dropzone {
+    background: var(--panel-2);
+    text-align: center;
+    transition: background 0.15s, outline 0.15s;
+    outline: 2px dashed transparent;
+    outline-offset: -8px;
+}
+
+.dropzone.is-over {
+    background: var(--accent-soft);
+    outline-color: var(--accent);
+}
+
+.dropzone p {
+    margin: 0 0 8px 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.file-button {
+    display: inline-block;
+    padding: 8px 14px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.file-button:hover {
+    filter: brightness(1.08);
+}
+
+.samples {
+    margin-top: 12px;
+    text-align: left;
+}
+
+.samples summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--accent);
+    list-style: none;
+}
+
+.samples summary::-webkit-details-marker {
+    display: none;
+}
+
+.samples ul {
+    list-style: none;
+    margin: 8px 0 0 0;
+    padding: 0;
+}
+
+.samples li {
+    padding: 6px 0;
+    font-size: 12px;
+}
+
+.samples a {
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.samples a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.toolbar button {
+    padding: 7px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text);
+}
+
+.toolbar button:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+}
+
+.toolbar button.is-active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.toolbar .slider {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.toolbar .slider input {
+    flex: 1;
+}
+
+.tree-root {
+    font-size: 13px;
+    user-select: none;
+}
+
+.tree-root details {
+    padding-left: 0;
+}
+
+.tree-root details > details,
+.tree-root details > .tree-row--leaf {
+    margin-left: 14px;
+    border-left: 1px dotted var(--border);
+    padding-left: 6px;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    cursor: default;
+}
+
+.tree-row summary,
+.tree-row::-webkit-details-marker {
+    display: none;
+}
+
+details > summary.tree-row {
+    list-style: none;
+}
+
+details > summary.tree-row::-webkit-details-marker {
+    display: none;
+}
+
+.tree-label {
+    flex: 1;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tree-label:hover {
+    color: var(--accent);
+}
+
+.tree-count {
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--panel-2);
+    padding: 1px 6px;
+    border-radius: 8px;
+}
+
+.selection-info {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.selection-info strong {
+    color: var(--text);
+}
+
+.selection-info dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 10px;
+    margin: 0;
+}
+
+.selection-info dt {
+    color: var(--muted);
+}
+
+.selection-info dd {
+    margin: 0;
+    color: var(--text);
+}
+
+#viewport {
+    position: relative;
+    background: var(--bg);
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    outline: none;
+    touch-action: none;
+}
+
+.progress {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 14px 22px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.progress[hidden] {
+    display: none !important;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--accent-soft);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.toast-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    max-width: 360px;
+}
+
+.toast {
+    background: rgba(20, 20, 30, 0.92);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    box-shadow: var(--shadow);
+    animation: toast-in 0.2s ease-out;
+    pointer-events: auto;
+}
+
+.toast.toast--error {
+    background: var(--danger);
+}
+
+.toast.toast--warn {
+    background: var(--warn);
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.foot a {
+    color: var(--muted);
+}
+
+.foot a:hover {
+    color: var(--accent);
+}
