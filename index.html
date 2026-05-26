@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAD 3D Viewer</title>
+</head>
+<body>
+<div id="app">
+    <aside id="sidebar">
+        <header class="brand">
+            <h1>CAD 3D Viewer</h1>
+            <p class="tagline">Drop a <code>.step</code> / <code>.iges</code> file</p>
+        </header>
+
+        <div id="dropzone" class="dropzone">
+            <p>Drop file here or</p>
+            <label class="file-button">
+                Choose file
+                <input id="file-input" type="file" accept=".step,.stp,.iges,.igs,.brep" hidden />
+            </label>
+            <details class="samples">
+                <summary>Or load a sample</summary>
+                <ul id="sample-list"></ul>
+            </details>
+        </div>
+
+        <section class="toolbar">
+            <button id="btn-screenshot" type="button" title="Download PNG">Screenshot</button>
+            <button id="btn-measure" type="button" title="Two-point distance">Measure</button>
+            <label class="slider">
+                Explode
+                <input id="explode-slider" type="range" min="0" max="100" value="0" />
+            </label>
+        </section>
+
+        <section class="tree">
+            <h2>Assembly</h2>
+            <div id="tree-root" class="tree-root"></div>
+        </section>
+
+        <section class="info">
+            <h2>Selection</h2>
+            <div id="selection-info" class="selection-info">Nothing selected.</div>
+        </section>
+
+        <footer class="foot">
+            <a href="https://github.com/kovacsv/occt-import-js" target="_blank" rel="noopener">occt-import-js</a>
+            ·
+            <a href="https://www.babylonjs.com/" target="_blank" rel="noopener">Babylon.js</a>
+        </footer>
+    </aside>
+
+    <main id="viewport">
+        <canvas id="renderCanvas" touch-action="none"></canvas>
+        <div id="progress" class="progress" hidden>
+            <div class="spinner"></div>
+            <span id="progress-label">Loading…</span>
+        </div>
+        <div id="toast-container" class="toast-container"></div>
+    </main>
+</div>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
