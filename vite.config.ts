@@ -4,7 +4,8 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 // Copy the occt-import-js WASM artifact into /occt-import-js/ at the web root
 // so the worker's locateFile() can resolve it with a stable URL in both dev
 // and production builds.
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+    base: command === 'build' ? '/cad-3d-viewer/' : '/',
     plugins: [
         viteStaticCopy({
             targets: [
@@ -45,4 +46,4 @@ export default defineConfig({
     server: {
         port: 5173,
     },
-});
+}));

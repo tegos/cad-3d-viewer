@@ -9,6 +9,7 @@
 // problems.
 
 /// <reference lib="webworker" />
+/// <reference types="vite/client" />
 
 import type { OcctFormat, OcctReadParams, OcctResult } from './types/occt';
 
@@ -20,7 +21,8 @@ declare const occtimportjs: (opts?: { locateFile?: (p: string, prefix: string) =
     ReadBrepFile: (b: Uint8Array, p: OcctReadParams | null) => OcctResult;
 }>;
 
-importScripts('/occt-import-js/occt-import-js.js', '/comlink/comlink.js');
+const base = import.meta.env.BASE_URL;
+importScripts(`${base}occt-import-js/occt-import-js.js`, `${base}comlink/comlink.js`);
 
 type OcctModule = Awaited<ReturnType<typeof occtimportjs>>;
 
@@ -29,7 +31,7 @@ let modulePromise: Promise<OcctModule> | null = null;
 function getModule(): Promise<OcctModule> {
     if (!modulePromise) {
         modulePromise = occtimportjs({
-            locateFile: (path) => `/occt-import-js/${path}`,
+            locateFile: (path) => `${base}occt-import-js/${path}`,
         });
     }
     return modulePromise;
