@@ -24,20 +24,22 @@ import {
     type SampleEntry,
 } from './ui/sidebar';
 
+const base = import.meta.env.BASE_URL;
+
 const SAMPLES: SampleEntry[] = [
     {
         label: 'Cube with hole (9 KB)',
-        url: '/samples/cube-hole.step',
+        url: `${base}samples/cube-hole.step`,
         note: 'Formlabs/foxtrot, Apache-2.0',
     },
     {
         label: 'Motor holder (234 KB)',
-        url: '/samples/motor-holder.step',
+        url: `${base}samples/motor-holder.step`,
         note: 'TheRobotStudio/SO-ARM100, Apache-2.0',
     },
     {
         label: 'Servo body (241 KB)',
-        url: '/samples/servo-body.step',
+        url: `${base}samples/servo-body.step`,
         note: 'TheRobotStudio/SO-ARM100, Apache-2.0',
     },
 ];
