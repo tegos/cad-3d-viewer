@@ -5,7 +5,7 @@ No backend, no upload, no COOP/COEP headers — the file is parsed locally by a
 WebAssembly build of [Open CASCADE Technology](https://dev.opencascade.org/)
 and rendered with [Babylon.js](https://www.babylonjs.com/).
 
-<video src="docs/hero.mp4" autoplay loop muted playsinline width="100%"></video>
+![hero](docs/hero.mp4)
 
 ## Why
 
