@@ -55,10 +55,12 @@ export function attachPicking(
     scene: Scene,
     getModel: () => BuiltModel | null,
     handlers: PickingHandlers = {},
+    isDisabled?: () => boolean,
 ): () => void {
     const state: PickingState = { hovered: null, selected: null };
 
     const observer = scene.onPointerObservable.add((info) => {
+        if (isDisabled?.()) return;
         const model = getModel();
         if (!model) return;
 

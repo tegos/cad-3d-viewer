@@ -9,17 +9,13 @@ import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
 import { CubeTexture } from '@babylonjs/core/Materials/Textures/cubeTexture';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { HighlightLayer } from '@babylonjs/core/Layers/highlightLayer';
-
 import '@babylonjs/core/Helpers/sceneHelpers';
 import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
-import '@babylonjs/core/Layers/effectLayerSceneComponent';
 
 export interface SceneBundle {
     engine: Engine;
     scene: Scene;
     camera: ArcRotateCamera;
-    highlight: HighlightLayer;
 }
 
 const ENV_URL =
@@ -63,15 +59,10 @@ export function createScene(canvas: HTMLCanvasElement): SceneBundle {
     scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(ENV_URL, scene);
     scene.environmentIntensity = 1.0;
 
-    const highlight = new HighlightLayer('highlight', scene, {
-        blurHorizontalSize: 0.6,
-        blurVerticalSize: 0.6,
-    });
-
     engine.runRenderLoop(() => scene.render());
 
     const resizeObserver = new ResizeObserver(() => engine.resize());
     resizeObserver.observe(canvas);
 
-    return { engine, scene, camera, highlight };
+    return { engine, scene, camera };
 }

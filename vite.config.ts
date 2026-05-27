@@ -41,6 +41,9 @@ export default defineConfig(() => ({
     build: {
         target: 'es2022',
         sourcemap: false,
+        rollupOptions: {
+            external: ['@babylonjs/inspector'],
+        },
     },
     // The occt-import-js bundle contains node-only require() paths that Vite
     // tries (and fails) to resolve. The library detects the browser at runtime

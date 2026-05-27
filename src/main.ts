@@ -46,16 +46,20 @@ const SAMPLES: SampleEntry[] = [
 
 const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
 const refs = getRefs();
-const { engine, scene, camera, highlight: _highlight } = createScene(canvas);
+const { engine, scene, camera } = createScene(canvas);
 const measure = new MeasureController(scene, 'mm');
 
 let currentModel: BuiltModel | null = null;
 let currentName = 'model';
 let explode: ExplodeController | null = null;
+let isLoading = false;
 
-attachPicking(scene, () => currentModel, {
-    onSelect: (face) => renderSelectionInfo(refs, face),
-});
+const disposePicking = attachPicking(
+    scene,
+    () => currentModel,
+    { onSelect: (face) => renderSelectionInfo(refs, face) },
+    () => measure.isEnabled(),
+);
 
 function clearScene(): void {
     if (currentModel) {
@@ -71,6 +75,11 @@ function clearScene(): void {
 }
 
 async function loadFromFile(file: File | Blob, name: string): Promise<void> {
+    if (isLoading) {
+        toast(refs, 'Still loading, please wait.', 'warn');
+        return;
+    }
+    isLoading = true;
     showProgress(refs, `Loading ${name}…`);
     try {
         const result = await loadCadFile(file, name);
@@ -98,6 +107,7 @@ async function loadFromFile(file: File | Blob, name: string): Promise<void> {
             toast(refs, `Loading failed: ${(err as Error).message}`, 'error');
         }
     } finally {
+        isLoading = false;
         hideProgress(refs);
     }
 }
@@ -152,7 +162,6 @@ if (new URLSearchParams(location.search).has('debug')) {
     (window as unknown as { __scene: typeof scene; __engine: typeof engine }).__engine = engine;
 }
 
-// Dev-only inspector. `?inspector=1` shows the full Babylon scene tree.
 if (new URLSearchParams(location.search).has('inspector')) {
     import('@babylonjs/inspector').then(({ Inspector }) => {
         Inspector.Show(scene, { embedMode: true });
@@ -160,6 +169,7 @@ if (new URLSearchParams(location.search).has('inspector')) {
 }
 
 window.addEventListener('beforeunload', () => {
+    disposePicking();
     measure.dispose();
     engine.dispose();
 });
