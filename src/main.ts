@@ -5,7 +5,7 @@
 import './ui/style.css';
 
 import { createScene } from './scene';
-import { loadCadFile, FileTooLargeError, UnsupportedFormatError, OcctReadError } from './loader';
+import { loadCadFile, FileTooLargeError, UnsupportedFormatError, OcctReadError, MAX_FILE_BYTES } from './loader';
 import { buildModel, type BuiltModel } from './builder';
 import { frameCamera } from './camera-frame';
 import { attachPicking } from './features/picking';
@@ -130,7 +130,13 @@ async function loadFromUrl(sample: SampleEntry): Promise<void> {
     }
 }
 
-wireDropZone(refs, (file, name) => loadFromFile(file, name));
+wireDropZone(refs, (file, name) => {
+    if (file.size > MAX_FILE_BYTES) {
+        toast(refs, `File is ${(file.size / 1024 / 1024).toFixed(1)} MB. Limit is ${MAX_FILE_BYTES / 1024 / 1024} MB.`, 'error');
+        return;
+    }
+    loadFromFile(file, name);
+});
 renderSampleList(refs, SAMPLES, (sample) => loadFromUrl(sample));
 
 refs.btnScreenshot.addEventListener('click', async () => {
