@@ -5,8 +5,7 @@ No backend, no upload, no COOP/COEP headers — the file is parsed locally by a
 WebAssembly build of [Open CASCADE Technology](https://dev.opencascade.org/)
 and rendered with [Babylon.js](https://www.babylonjs.com/).
 
-![Servo body sample](docs/screenshot-servo.png)
-![Assembly tree and picking](docs/screenshot-assembly.png)
+![hero](docs/hero.mp4)
 
 ## Why
 

@@ -9,11 +9,10 @@
 // problems.
 
 /// <reference lib="webworker" />
-/// <reference types="vite/client" />
-
 import type { OcctFormat, OcctReadParams, OcctResult } from './types/occt';
 
 declare const importScripts: (...urls: string[]) => void;
+declare const __BASE_URL__: string;
 declare const Comlink: typeof import('comlink');
 declare const occtimportjs: (opts?: { locateFile?: (p: string, prefix: string) => string }) => Promise<{
     ReadStepFile: (b: Uint8Array, p: OcctReadParams | null) => OcctResult;
@@ -21,7 +20,7 @@ declare const occtimportjs: (opts?: { locateFile?: (p: string, prefix: string) =
     ReadBrepFile: (b: Uint8Array, p: OcctReadParams | null) => OcctResult;
 }>;
 
-const base = import.meta.env.BASE_URL;
+const base = __BASE_URL__;
 importScripts(`${base}occt-import-js/occt-import-js.js`, `${base}comlink/comlink.js`);
 
 type OcctModule = Awaited<ReturnType<typeof occtimportjs>>;
