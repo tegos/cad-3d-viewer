@@ -1,11 +1,12 @@
 # cad-3d-viewer
 
-Drag-drop a `.step` / `.iges` / `.brep` file into the browser and look at it.
+**[Live demo](https://tegos.github.io/cad-3d-viewer/)** — drag-drop a `.step` / `.iges` / `.brep` file into the browser and look at it.
 No backend, no upload, no COOP/COEP headers — the file is parsed locally by a
 WebAssembly build of [Open CASCADE Technology](https://dev.opencascade.org/)
 and rendered with [Babylon.js](https://www.babylonjs.com/).
 
 ![Servo body sample](docs/screenshot-servo.png)
+![Assembly tree and picking](docs/screenshot-assembly.png)
 
 ## Why
 
@@ -70,7 +71,7 @@ after the first load action, so the initial page paint isn't blocked.
 ## Gotchas worth knowing if you build something similar
 
 - **No SharedArrayBuffer needed.** occt-import-js is a single-threaded
-  Emscripten build, so you avoid the whole COOP/COEP isolation rabbit hole.
+  Emscripten build, so you skip the COOP/COEP isolation setup entirely.
 - **Use a worker.** `ReadStepFile` is synchronous C++; on a real assembly it
   blocks the calling thread for seconds. The viewport will freeze if you call
   it from the main thread.
@@ -81,7 +82,7 @@ after the first load action, so the initial page paint isn't blocked.
 - **`locateFile`.** Emscripten resolves `.wasm` relative to the script URL,
   which doesn't survive bundling. Always pass `locateFile` explicitly:
   ```js
-  occtimportjs({ locateFile: (p) => `/occt-import-js/${p}` })
+  occtimportjs({ locateFile: (p) => `${import.meta.env.BASE_URL}occt-import-js/${p}` })
   ```
   The Vite `vite-plugin-static-copy` plugin publishes the WASM at that path in
   both dev and prod.
@@ -123,5 +124,4 @@ after the first load action, so the initial page paint isn't blocked.
 
 - [Viktor Kovacs](https://github.com/kovacsv) for **occt-import-js** and the
   reference [Online 3D Viewer](https://3dviewer.net/) it powers.
-- The **Babylon.js** team for a renderer that makes this kind of small
-  experiment so direct to write.
+- The **Babylon.js** team for a renderer that makes this straightforward to build.
