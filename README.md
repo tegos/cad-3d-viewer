@@ -43,14 +43,7 @@ Add `?debug=1` to expose `window.__scene` / `window.__engine` for the console.
 ## How it works
 
 ```
-┌──────────────────┐   transfer ArrayBuffer    ┌──────────────────────┐
-│  main thread     │ ─────────────────────────▶│  classic web worker  │
-│  Babylon scene   │                           │                      │
-│  drop / fetch    │                           │  importScripts:      │
-│  builder.ts ─────┤◀─── OCCT JSON  ───────────┤   occt-import-js.js  │
-│  per-face submesh│                           │   comlink.js (UMD)   │
-└──────────────────┘                           │   .wasm loaded once  │
-                                               └──────────────────────┘
+drop/fetch file ──▶ Web Worker (occt-import-js WASM) ──▶ JSON ──▶ Babylon.js meshes
 ```
 
 1. The main thread reads the dropped file into an `ArrayBuffer` and posts it
