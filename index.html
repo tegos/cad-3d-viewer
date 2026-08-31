@@ -3,21 +3,32 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CAD 3D Viewer</title>
+    <title>CAD 3D Viewer - STEP / IGES / BREP in the browser</title>
+    <meta name="description" content="Drag-drop STEP, IGES and BREP CAD files straight into the browser. Babylon.js + occt-import-js, no backend, no upload." />
+    <!-- Inline SVG favicon: no extra request, and the site was 404ing on
+         /favicon.ico for every visitor. -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230066ff'/%3E%3Cpath d='M16 5 27 11v10L16 27 5 21V11z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 11l11 6 11-6M16 17v10' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CAD 3D Viewer" />
+    <meta property="og:description" content="Drag-drop STEP, IGES and BREP CAD files straight into the browser. No backend, no upload." />
+    <meta property="og:url" content="https://tegos.github.io/cad-3d-viewer/" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/tegos/cad-3d-viewer/main/assets/demo.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
 <div id="app">
     <aside id="sidebar">
         <header class="brand">
             <h1>CAD 3D Viewer</h1>
-            <p class="tagline">Drop a <code>.step</code> / <code>.iges</code> file</p>
+            <p class="tagline">Drop a <code>.step</code> / <code>.iges</code> / <code>.brep</code> file</p>
         </header>
 
         <div id="dropzone" class="dropzone">
             <p>Drop file here or</p>
             <label class="file-button">
                 Choose file
-                <input id="file-input" type="file" accept=".step,.stp,.iges,.igs,.brep" hidden />
+                <input id="file-input" class="sr-only" type="file" accept=".step,.stp,.iges,.igs,.brep" />
             </label>
             <details class="samples">
                 <summary>Or load a sample</summary>
@@ -30,7 +41,7 @@
             <button id="btn-measure" type="button" title="Two-point distance">Measure</button>
             <label class="slider">
                 Explode
-                <input id="explode-slider" type="range" min="0" max="100" value="0" />
+                <input id="explode-slider" type="range" min="0" max="100" value="0" disabled />
             </label>
         </section>
 
@@ -53,11 +64,11 @@
 
     <main id="viewport">
         <canvas id="renderCanvas" touch-action="none"></canvas>
-        <div id="progress" class="progress" hidden>
+        <div id="progress" class="progress" role="status" aria-live="polite" hidden>
             <div class="spinner"></div>
             <span id="progress-label">Loading…</span>
         </div>
-        <div id="toast-container" class="toast-container"></div>
+        <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
     </main>
 </div>
 

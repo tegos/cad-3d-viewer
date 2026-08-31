@@ -56,11 +56,17 @@ function renderNode(
     checkbox.type = 'checkbox';
     checkbox.checked = true;
     checkbox.title = 'Show/hide';
+    // Every checkbox announced an identical "Show/hide" before; naming the
+    // part is the whole point of the label for a screen-reader user.
+    checkbox.setAttribute('aria-label', `Show ${node.name || 'unnamed part'}`);
     checkbox.addEventListener('click', (e) => e.stopPropagation());
     checkbox.addEventListener('change', () => toggleVisibility(node, checkbox.checked));
     summary.appendChild(checkbox);
 
-    const label = document.createElement('span');
+    // A button, not a span: this is the frame-on-click action, and as a span
+    // it was unreachable by keyboard.
+    const label = document.createElement('button');
+    label.type = 'button';
     label.className = 'tree-label';
     label.textContent = node.name || '(unnamed)';
     label.title = 'Click to frame';
