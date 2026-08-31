@@ -10,7 +10,7 @@ A simple cube with a through-hole. Useful as a minimal smoke test.
 
 - Source: [Formlabs/foxtrot](https://github.com/Formlabs/foxtrot/blob/master/examples/cube_hole.step)
 - License: Apache-2.0
-- Copyright: Formlab, Inc. and contributors
+- Copyright: Formlabs, Inc. and contributors
 
 ## `motor-holder.step` (~234 KB)
 

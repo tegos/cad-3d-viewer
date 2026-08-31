@@ -1,11 +1,16 @@
+import process from 'node:process';
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 // Copy the occt-import-js WASM artifact into /occt-import-js/ at the web root
 // so the worker's locateFile() can resolve it with a stable URL in both dev
 // and production builds.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const base = (globalThis as any).process?.env?.CI ? '/cad-3d-viewer/' : '/';
+// GitHub Pages serves a project site from /<repo>/, so the base has to match
+// the repository name. Deriving it from GITHUB_REPOSITORY rather than
+// hardcoding means a fork deploys to its own path instead of silently 404ing
+// on every asset. Any other CI keys off the same variable being absent.
+const repo = process.env.GITHUB_REPOSITORY?.split('/')[1];
+const base = repo ? `/${repo}/` : '/';
 
 export default defineConfig(() => ({
     base,
@@ -27,6 +32,18 @@ export default defineConfig(() => ({
                     src: 'node_modules/comlink/dist/umd/comlink.js',
                     dest: 'comlink',
                 },
+                // occt-import-js is LGPL-2.1 and OCCT itself is LGPL-2.1 with
+                // the Open CASCADE exception; both require the license to
+                // travel with the binary we ship, so the texts go out next to
+                // the .wasm rather than living only in node_modules.
+                {
+                    src: 'node_modules/occt-import-js/dist/license.occt-import-js.txt',
+                    dest: 'occt-import-js',
+                },
+                {
+                    src: 'node_modules/occt-import-js/dist/license.occt.txt',
+                    dest: 'occt-import-js',
+                },
             ],
         }),
     ],
@@ -40,10 +57,12 @@ export default defineConfig(() => ({
     },
     build: {
         target: 'es2022',
+        // Source maps stay off: they add ~8 MB to a Pages artifact that
+        // already carries a 7.3 MB WASM binary.
         sourcemap: false,
-        rollupOptions: {
-            external: ['@babylonjs/inspector'],
-        },
+        // No manualChunks: splitting @babylonjs into its own chunk was tried
+        // and cost 640 kB (1.91 MB -> 2.55 MB), because the chunk boundary
+        // forces Rollup to keep exports that it otherwise shakes out.
     },
     // The occt-import-js bundle contains node-only require() paths that Vite
     // tries (and fails) to resolve. The library detects the browser at runtime
