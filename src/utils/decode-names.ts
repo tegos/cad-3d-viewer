@@ -12,7 +12,13 @@
 // producing things like "m린 G-2") is out of scope here — the bytes are
 // already lost by the time the JSON reaches us.
 
-const CYRILLIC_RE = /[А-яЁёЇїІіЄєҐґ]/;
+// A single Cyrillic letter is not evidence of anything: German, French and
+// Nordic names are full of Latin-1 bytes that windows-1251 happily maps onto
+// one Cyrillic letter each. "Gehäuse" came back as "Gehдuse", "Ölfilter" as
+// "Цlfilter", "Ø12 shaft" as "Ш12 shaft" — all of them accepted, all of them
+// corrupt. Real Windows-1251 mojibake decodes to Cyrillic *words*, so require
+// a run of at least two.
+const CYRILLIC_RUN_RE = /[А-яЁёЇїІіЄєҐґ]{2,}/;
 
 function looksLikeLatin1Mojibake(s: string): boolean {
     let hasLatin1Supp = false;
@@ -45,7 +51,7 @@ export function decodeName(s: string | undefined | null): string {
     const bytes = new Uint8Array(s.length);
     for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
     const candidate = dec.decode(bytes);
-    return CYRILLIC_RE.test(candidate) ? candidate : s;
+    return CYRILLIC_RUN_RE.test(candidate) ? candidate : s;
 }
 
 // Any code point outside ASCII printable + Cyrillic (incl. Ukrainian

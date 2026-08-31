@@ -10,18 +10,55 @@ import type { OcctFormat, OcctReadParams, OcctResult } from './types/occt';
 // instead of an obscure OOM.
 export const MAX_FILE_BYTES = 90 * 1024 * 1024;
 
-let workerProxy: Comlink.Remote<LoaderWorkerApi> | null = null;
+interface WorkerHandle {
+    worker: Worker;
+    proxy: Comlink.Remote<LoaderWorkerApi>;
+}
+
+let handle: WorkerHandle | null = null;
+
+// Comlink installs no error listener of its own, so if the worker dies before
+// it can post a reply — a 404 on the Emscripten bundle under a wrong base URL,
+// a syntax error, an abort() from the WASM heap — the pending readFile()
+// promise never settles and the caller's `finally` never runs. Anything
+// waiting on the current call is parked here so the worker's own error event
+// can reject it.
+let pendingRejects: ((err: Error) => void)[] = [];
+
+function killWorker(err: Error): void {
+    handle?.worker.terminate();
+    handle = null;
+    const waiting = pendingRejects;
+    pendingRejects = [];
+    for (const reject of waiting) reject(err);
+}
 
 function getWorker(): Comlink.Remote<LoaderWorkerApi> {
-    if (!workerProxy) {
+    if (!handle) {
         // Classic worker — see loader.worker.ts for why ESM workers don't
         // play well with the upstream Emscripten UMD bundle.
         const worker = new Worker(new URL('./loader.worker.ts', import.meta.url), {
             type: 'classic',
         });
-        workerProxy = Comlink.wrap<LoaderWorkerApi>(worker);
+        worker.addEventListener('error', (e) => {
+            killWorker(new WorkerFailedError(e.message || 'worker script failed to load'));
+        });
+        worker.addEventListener('messageerror', () => {
+            killWorker(new WorkerFailedError('worker sent a message that could not be deserialized'));
+        });
+        handle = { worker, proxy: Comlink.wrap<LoaderWorkerApi>(worker) };
     }
-    return workerProxy;
+    return handle.proxy;
+}
+
+/** Reject `call` as soon as the worker dies, instead of hanging forever. */
+function untilWorkerDies<T>(call: Promise<T>): Promise<T> {
+    const death = new Promise<never>((_, reject) => {
+        pendingRejects.push(reject);
+    });
+    return Promise.race([call, death]).finally(() => {
+        pendingRejects = [];
+    });
 }
 
 export class FileTooLargeError extends Error {
@@ -35,6 +72,13 @@ export class UnsupportedFormatError extends Error {
     constructor(public ext: string) {
         super(`Unsupported file extension ".${ext}". Use .step/.stp, .iges/.igs, or .brep.`);
         this.name = 'UnsupportedFormatError';
+    }
+}
+
+export class WorkerFailedError extends Error {
+    constructor(detail: string) {
+        super(`The CAD parser worker stopped: ${detail}. Try loading the file again.`);
+        this.name = 'WorkerFailedError';
     }
 }
 
@@ -66,7 +110,11 @@ export async function loadCadFile(
     const worker = getWorker();
     // Comlink transfers the ArrayBuffer (ownership moves to the worker), which
     // avoids cloning multi-MB payloads.
-    const result = await worker.readFile(format, Comlink.transfer(buffer, [buffer]), params);
+    const result = await untilWorkerDies(
+        worker.readFile(format, Comlink.transfer(buffer, [buffer]), params),
+    );
+    // A success=false result means OCCT rejected the file, not that the worker
+    // is broken — it stays up for the next load. Only killWorker() retires it.
     if (!result.success) {
         throw new OcctReadError();
     }
