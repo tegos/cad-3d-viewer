@@ -139,6 +139,18 @@ wireDropZone(refs, (file, name) => {
 });
 renderSampleList(refs, SAMPLES, (sample) => loadFromUrl(sample));
 
+// Autoload a model so the viewport is never empty on first paint.
+// `?model=none` starts blank; `?model=<relative-url>` loads a custom file
+// (relative only, so a link cannot point the viewer at a third-party host).
+const modelParam = new URLSearchParams(location.search).get('model');
+const isRelativeUrl = (url: string): boolean => !/^[a-z]+:/i.test(url) && !url.startsWith('//');
+if (modelParam !== 'none') {
+    const startup: SampleEntry | undefined = modelParam && isRelativeUrl(modelParam)
+        ? { label: modelParam.split('/').pop() ?? 'model', url: modelParam }
+        : SAMPLES[0];
+    if (startup) loadFromUrl(startup);
+}
+
 refs.btnScreenshot.addEventListener('click', async () => {
     try {
         await downloadScreenshot(engine, camera, currentName);
