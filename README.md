@@ -5,7 +5,7 @@ No backend, no upload, no COOP/COEP headers — the file is parsed locally by a
 WebAssembly build of [Open CASCADE Technology](https://dev.opencascade.org/)
 and rendered with [Babylon.js](https://www.babylonjs.com/).
 
-![hero](docs/hero.gif)
+<img src="assets/demo.webp" alt="CAD 3D Viewer demo" width="800">
 
 ## Why
 
