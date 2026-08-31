@@ -22,8 +22,10 @@ const ENV_URL =
     'https://assets.babylonjs.com/environments/environmentSpecular.env';
 
 export function createScene(canvas: HTMLCanvasElement): SceneBundle {
+    // No preserveDrawingBuffer: screenshots render to an offscreen target
+    // (features/screenshot.ts), so nothing ever reads this canvas back, and
+    // keeping the buffer alive costs a no-discard on every frame.
     const engine = new Engine(canvas, true, {
-        preserveDrawingBuffer: true,
         stencil: true,
         antialias: true,
     });

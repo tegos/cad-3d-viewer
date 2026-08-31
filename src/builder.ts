@@ -32,6 +32,8 @@ export interface FaceRef {
 export interface BuiltModel {
     root: TransformNode;
     meshes: Mesh[];
+    /** Same contents as `meshes`, for O(1) hit-testing on every pointer move. */
+    meshSet: Set<Mesh>;
     /** Lookup: `${mesh.uniqueId}:${submeshIndex}` → FaceRef. */
     faces: Map<string, FaceRef>;
     /** Top-level children of the root — what exploded view operates on. */
@@ -133,6 +135,11 @@ function createBabylonMesh(
     mesh.material = material;
     mesh.hasVertexAlpha = false;
 
+    // Babylon's default pointerMovePredicate ignores meshes that have neither
+    // an ActionManager nor this flag, so without it POINTERMOVE never reports
+    // a hit and the hover highlight in features/picking.ts can never fire.
+    mesh.enablePointerMoveEvents = true;
+
     // One SubMesh per OCCT face — gives us PickingInfo.subMeshId per face.
     // The SubMesh constructor pushes itself onto mesh.subMeshes, so we clear
     // the auto-created cover-all submesh first.
@@ -179,6 +186,7 @@ function walkNode(
         if (!occtMesh) continue;
         const m = createBabylonMesh(scene, occtMesh, node, nodeName, out.faces, counters.mesh);
         out.meshes.push(m);
+        out.meshSet.add(m);
     }
 
     for (const child of occtNode.children) {
@@ -195,6 +203,7 @@ export function buildModel(scene: Scene, result: OcctResult): BuiltModel {
     const out: BuiltModel = {
         root,
         meshes: [],
+        meshSet: new Set(),
         faces: new Map(),
         topLevel: [],
     };
@@ -210,6 +219,7 @@ export function buildModel(scene: Scene, result: OcctResult): BuiltModel {
         if (!occtMesh) continue;
         const m = createBabylonMesh(scene, occtMesh, root, rootName, out.faces, counters.mesh);
         out.meshes.push(m);
+        out.meshSet.add(m);
     }
 
     for (const child of result.root.children) {

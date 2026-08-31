@@ -5,7 +5,14 @@
 import './ui/style.css';
 
 import { createScene } from './scene';
-import { loadCadFile, FileTooLargeError, UnsupportedFormatError, OcctReadError, MAX_FILE_BYTES } from './loader';
+import {
+    loadCadFile,
+    FileTooLargeError,
+    UnsupportedFormatError,
+    OcctReadError,
+    WorkerFailedError,
+    MAX_FILE_BYTES,
+} from './loader';
 import { buildModel, type BuiltModel } from './builder';
 import { frameCamera } from './camera-frame';
 import { attachPicking } from './features/picking';
@@ -54,7 +61,7 @@ let currentName = 'model';
 let explode: ExplodeController | null = null;
 let isLoading = false;
 
-const disposePicking = attachPicking(
+const picking = attachPicking(
     scene,
     () => currentModel,
     { onSelect: (face) => renderSelectionInfo(refs, face) },
@@ -62,6 +69,9 @@ const disposePicking = attachPicking(
 );
 
 function clearScene(): void {
+    // Drop hover/select first — they hold FaceRefs into meshes we are about to
+    // dispose, and keeping them would pin the old geometry for the session.
+    picking.reset();
     if (currentModel) {
         for (const m of currentModel.meshes) m.dispose(false, true);
         currentModel.root.dispose();
@@ -70,8 +80,43 @@ function clearScene(): void {
     measure.clear();
     explode = null;
     refs.explodeSlider.value = '0';
+    refs.explodeSlider.disabled = true;
     renderSelectionInfo(refs, null);
     refs.treeRoot.replaceChildren();
+}
+
+/** Build the scene from an already-fetched blob. Callers own isLoading. */
+async function applyLoad(file: File | Blob, name: string): Promise<void> {
+    const result = await loadCadFile(file, name);
+    clearScene();
+    const model = buildModel(scene, result);
+    currentModel = model;
+    currentName = name.replace(/\.[^.]+$/, '');
+    renderTree(model.root, refs.treeRoot, camera);
+    frameCamera(camera, model.meshes);
+    explode = new ExplodeController(model);
+    refs.explodeSlider.disabled = explode.partCount < 2;
+    if (model.meshes.length === 0) {
+        toast(refs, 'File loaded but no geometry was returned.', 'warn');
+    } else if (explode.partCount < 2) {
+        toast(refs, `Loaded ${model.meshes.length} mesh(es), ${model.faces.size} face(s). Single part, so Explode is off.`);
+    } else {
+        toast(refs, `Loaded ${model.meshes.length} mesh(es), ${model.faces.size} face(s).`);
+    }
+}
+
+function reportLoadError(err: unknown): void {
+    if (
+        err instanceof FileTooLargeError ||
+        err instanceof UnsupportedFormatError ||
+        err instanceof OcctReadError ||
+        err instanceof WorkerFailedError
+    ) {
+        toast(refs, err.message, 'error');
+        return;
+    }
+    console.error(err);
+    toast(refs, `Loading failed: ${(err as Error).message}`, 'error');
 }
 
 async function loadFromFile(file: File | Blob, name: string): Promise<void> {
@@ -80,32 +125,11 @@ async function loadFromFile(file: File | Blob, name: string): Promise<void> {
         return;
     }
     isLoading = true;
-    showProgress(refs, `Loading ${name}…`);
+    showProgress(refs, `Loading ${name}\u2026`);
     try {
-        const result = await loadCadFile(file, name);
-        clearScene();
-        const model = buildModel(scene, result);
-        currentModel = model;
-        currentName = name.replace(/\.[^.]+$/, '');
-        renderTree(model.root, refs.treeRoot, camera);
-        frameCamera(camera, model.meshes);
-        explode = new ExplodeController(model);
-        if (model.meshes.length === 0) {
-            toast(refs, 'File loaded but no geometry was returned.', 'warn');
-        } else {
-            toast(refs, `Loaded ${model.meshes.length} mesh(es), ${model.faces.size} face(s).`);
-        }
+        await applyLoad(file, name);
     } catch (err) {
-        if (err instanceof FileTooLargeError) {
-            toast(refs, err.message, 'error');
-        } else if (err instanceof UnsupportedFormatError) {
-            toast(refs, err.message, 'error');
-        } else if (err instanceof OcctReadError) {
-            toast(refs, err.message, 'error');
-        } else {
-            console.error(err);
-            toast(refs, `Loading failed: ${(err as Error).message}`, 'error');
-        }
+        reportLoadError(err);
     } finally {
         isLoading = false;
         hideProgress(refs);
@@ -113,39 +137,59 @@ async function loadFromFile(file: File | Blob, name: string): Promise<void> {
 }
 
 async function loadFromUrl(sample: SampleEntry): Promise<void> {
-    showProgress(refs, `Fetching ${sample.label}…`);
+    // The guard has to live here too, not only in loadFromFile: without it a
+    // second sample click during a fetch fell through, and whichever request
+    // finished last won — the label said B while the viewport showed A.
+    if (isLoading) {
+        toast(refs, 'Still loading, please wait.', 'warn');
+        return;
+    }
+    isLoading = true;
+    showProgress(refs, `Fetching ${sample.label}\u2026`);
     try {
         const response = await fetch(sample.url);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status} for ${sample.url}`);
         }
         const blob = await response.blob();
-        // loadFromFile manages its own progress show/hide, so we don't need
-        // a finally here — it always restores the hidden state.
-        await loadFromFile(blob, sample.url.split('/').pop() ?? 'sample.step');
+        const name = sample.url.split('/').pop() ?? 'sample.step';
+        showProgress(refs, `Loading ${name}\u2026`);
+        await applyLoad(blob, name);
     } catch (err) {
-        console.error(err);
-        toast(refs, `Could not fetch ${sample.label}: ${(err as Error).message}`, 'error');
+        reportLoadError(err);
+    } finally {
+        isLoading = false;
         hideProgress(refs);
     }
 }
 
 wireDropZone(refs, (file, name) => {
+    // Checked here as well as inside loadCadFile so an oversized file is
+    // rejected instantly, before the multi-MB arrayBuffer() read.
     if (file.size > MAX_FILE_BYTES) {
-        toast(refs, `File is ${(file.size / 1024 / 1024).toFixed(1)} MB. Limit is ${MAX_FILE_BYTES / 1024 / 1024} MB.`, 'error');
+        toast(refs, new FileTooLargeError(file.size).message, 'error');
         return;
     }
     loadFromFile(file, name);
-});
+}, (message) => toast(refs, message, 'warn'));
 renderSampleList(refs, SAMPLES, (sample) => loadFromUrl(sample));
 
 // Autoload a model so the viewport is never empty on first paint.
 // `?model=none` starts blank; `?model=<relative-url>` loads a custom file
 // (relative only, so a link cannot point the viewer at a third-party host).
-const modelParam = new URLSearchParams(location.search).get('model');
-const isRelativeUrl = (url: string): boolean => !/^[a-z]+:/i.test(url) && !url.startsWith('//');
+const params = new URLSearchParams(location.search);
+const modelParam = params.get('model');
+// Resolve before judging: a prefix test alone lets `\\evil.com/x.step` through,
+// which the URL parser then resolves to a different origin.
+const isSameOrigin = (url: string): boolean => {
+    try {
+        return new URL(url, location.href).origin === location.origin;
+    } catch {
+        return false;
+    }
+};
 if (modelParam !== 'none') {
-    const startup: SampleEntry | undefined = modelParam && isRelativeUrl(modelParam)
+    const startup: SampleEntry | undefined = modelParam && isSameOrigin(modelParam)
         ? { label: modelParam.split('/').pop() ?? 'model', url: modelParam }
         : SAMPLES[0];
     if (startup) loadFromUrl(startup);
@@ -175,19 +219,23 @@ refs.explodeSlider.addEventListener('input', () => {
 });
 
 // Dev-only debug hook. `?debug=1` exposes the scene + engine on `window`.
-if (new URLSearchParams(location.search).has('debug')) {
+if (params.has('debug')) {
     (window as unknown as { __scene: typeof scene; __engine: typeof engine }).__scene = scene;
     (window as unknown as { __scene: typeof scene; __engine: typeof engine }).__engine = engine;
 }
 
-if (new URLSearchParams(location.search).has('inspector')) {
-    import('@babylonjs/inspector').then(({ Inspector }) => {
-        Inspector.Show(scene, { embedMode: true });
-    });
+// import.meta.env.DEV is a compile-time constant, so the whole branch — and
+// with it the inspector bundle — is dropped from the production build. It used
+// to be marked as a Rollup external instead, which left a bare
+// `import("@babylonjs/inspector")` specifier in the shipped chunk that the
+// browser could not resolve.
+if (import.meta.env.DEV && params.has('inspector')) {
+    import('@babylonjs/inspector')
+        .then(({ Inspector }) => Inspector.Show(scene, { embedMode: true }))
+        .catch((err) => toast(refs, `Inspector failed to load: ${(err as Error).message}`, 'error'));
 }
 
-window.addEventListener('beforeunload', () => {
-    disposePicking();
-    measure.dispose();
-    engine.dispose();
-});
+// No beforeunload teardown on purpose: it disables the back/forward cache in
+// Firefox and Safari, and the browser reclaims the WebGL context and the
+// worker on its own. Disposing here would also break a bfcache restore, which
+// hands the user back a live page.

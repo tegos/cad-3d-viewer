@@ -48,7 +48,14 @@ function restoreFaceColor(face: FaceRef): void {
 
 function pickedMeshIsPart(model: BuiltModel, mesh: Mesh | null | undefined): mesh is Mesh {
     if (!mesh) return false;
-    return model.meshes.includes(mesh);
+    return model.meshSet.has(mesh);
+}
+
+export interface PickingController {
+    /** Forget the current hover/select without touching the meshes. Call this
+     *  before disposing a model, or the state keeps the old geometry alive. */
+    reset(): void;
+    dispose(): void;
 }
 
 export function attachPicking(
@@ -56,8 +63,12 @@ export function attachPicking(
     getModel: () => BuiltModel | null,
     handlers: PickingHandlers = {},
     isDisabled?: () => boolean,
-): () => void {
+): PickingController {
     const state: PickingState = { hovered: null, selected: null };
+    const canvas = scene.getEngine().getRenderingCanvas();
+    const setCursor = (value: string) => {
+        if (canvas) canvas.style.cursor = value;
+    };
 
     const observer = scene.onPointerObservable.add((info) => {
         if (isDisabled?.()) return;
@@ -71,7 +82,7 @@ export function attachPicking(
                     restoreFaceColor(state.hovered);
                 }
                 state.hovered = null;
-                scene.getEngine().getRenderingCanvas()!.style.cursor = '';
+                setCursor('');
                 return;
             }
             const face = model.faces.get(`${(pick.pickedMesh as Mesh).uniqueId}:${pick.subMeshId}`);
@@ -81,7 +92,7 @@ export function attachPicking(
                 }
                 state.hovered = face;
                 if (face !== state.selected) stampFaceColor(face, HOVER_COLOR);
-                scene.getEngine().getRenderingCanvas()!.style.cursor = 'pointer';
+                setCursor('pointer');
             }
             return;
         }
@@ -106,7 +117,16 @@ export function attachPicking(
         }
     });
 
-    return () => {
-        scene.onPointerObservable.remove(observer);
+    return {
+        reset() {
+            state.hovered = null;
+            state.selected = null;
+            setCursor('');
+        },
+        dispose() {
+            scene.onPointerObservable.remove(observer);
+            state.hovered = null;
+            state.selected = null;
+        },
     };
 }

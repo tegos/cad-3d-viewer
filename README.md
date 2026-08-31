@@ -17,8 +17,8 @@ this repo is a small, focused recipe that puts them together with Babylon.js.
 
 Features:
 
-- Drop any `.step` / `.stp` / `.iges` / `.igs` / `.brep` file → mesh, in 1–3 s
-  for typical mechanical parts
+- Drop any `.step` / `.stp` / `.iges` / `.igs` / `.brep` file → mesh, usually
+  in a couple of seconds for a part in the few-hundred-KB range
 - Per-face picking (each B-rep face is its own pickable submesh)
 - Runtime exploded view (slider controls the offset, no special export needed)
 - Two-point distance measurement
@@ -28,17 +28,37 @@ Features:
 ## Quick start
 
 ```bash
-npm install
+npm install      # Node 20+ (CI builds on 22)
 npm run dev      # http://localhost:5173
+npm run typecheck
 npm run build    # type-check + production bundle into dist/
 npm run preview  # serve the built bundle
 ```
 
-Open the dev server, click **"Or load a sample"** in the sidebar, or drop your
-own STEP file on the canvas.
+The viewer autoloads the first bundled sample so the viewport is never empty.
+Drop your own file anywhere on the page, use **Choose file**, or pick another
+sample under **"Or load a sample"**.
 
-Add `?inspector=1` to the URL to open the Babylon Inspector for the scene.
-Add `?debug=1` to expose `window.__scene` / `window.__engine` for the console.
+URL parameters:
+
+| Parameter | Effect |
+|-----------|--------|
+| `?model=none` | Skip the startup autoload and open blank. |
+| `?model=<relative-url>` | Autoload that file instead. Same-origin only. |
+| `?debug=1` | Expose `window.__scene` / `window.__engine` on the console. |
+| `?inspector=1` | Open the Babylon Inspector. **Dev builds only** — the inspector is compiled out of the production bundle. |
+
+## Limitations
+
+- STEP, IGES and BREP only. No STL, OBJ, glTF, Parasolid or native CAD formats.
+- ~90 MB file ceiling. The 32-bit Emscripten heap gives out somewhere near
+  100 MB, so the viewer bails a little earlier with a readable message.
+- Single-threaded parsing. Large assemblies take as long as they take; there
+  is no worker pool and no cancel button.
+- Exploded view needs a multi-part assembly. A single-part file has nothing to
+  move apart, so the slider is disabled for those.
+- Modern browsers only: WebAssembly, Web Workers and WebGL2 are all required.
+  Tested on current Chromium, Firefox and Safari.
 
 ## How it works
 
@@ -89,6 +109,8 @@ after the first load action, so the initial page paint isn't blocked.
 
 | Path                              | Purpose                                                |
 |-----------------------------------|--------------------------------------------------------|
+| `index.html`                      | Shell markup for the sidebar and viewport.             |
+| `vite.config.ts`                  | Base path, WASM/license static copy, worker format.    |
 | `src/main.ts`                     | Entry point. Wires features to sidebar.                |
 | `src/scene.ts`                    | Babylon engine, camera, lighting, render loop.         |
 | `src/loader.ts`                   | Main-thread wrapper around the worker.                 |
@@ -105,12 +127,20 @@ after the first load action, so the initial page paint isn't blocked.
 ## Licensing
 
 - This repo's code is **MIT** (see `LICENSE`).
-- `occt-import-js` is **LGPL-2.1** (Open CASCADE), loaded as a separate WASM
-  blob at runtime — see `ATTRIBUTION.md`.
+- `occt-import-js` is **LGPL-2.1**, wrapping Open CASCADE, which is
+  **LGPL-2.1 with the Open CASCADE exception**. It is loaded as a separate
+  WASM blob at runtime and the build ships the upstream license texts next to
+  it at `/occt-import-js/license.occt.txt` — see `ATTRIBUTION.md`.
 - Bundled `.step` samples are **Apache-2.0** from
   [Formlabs/foxtrot](https://github.com/Formlabs/foxtrot) and
   [TheRobotStudio/SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100) —
   see `public/samples/ATTRIBUTION.md`.
+
+## Contributing
+
+Issues and pull requests are welcome. Keep changes focused, run
+`npm run build` (it type-checks first) before opening a PR, and describe what
+you verified in a browser — there is no test suite yet.
 
 ## Acknowledgements
 
