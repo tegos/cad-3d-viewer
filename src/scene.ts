@@ -43,6 +43,23 @@ export function createScene(canvas: HTMLCanvasElement): SceneBundle {
         scene,
     );
     camera.attachControl(canvas, true);
+
+    // attachControl sets tabindex on the canvas and calls focus() from its own
+    // pointerdown handler. Chrome counts that programmatic focus as
+    // keyboard-ish, so :focus-visible matched on every orbit drag and painted a
+    // blue ring around the viewport. Flag pointer-driven focus so the ring is
+    // suppressed for the mouse but still shows when the canvas is tabbed to.
+    canvas.addEventListener('pointerdown', () => {
+        canvas.classList.add('pointer-focus');
+    });
+    canvas.addEventListener('blur', () => {
+        canvas.classList.remove('pointer-focus');
+    });
+    // Babylon keeps the canvas focused across a Tab press, so blur alone would
+    // never restore the ring once the mouse had suppressed it.
+    document.addEventListener('keydown', () => {
+        canvas.classList.remove('pointer-focus');
+    });
     camera.wheelDeltaPercentage = 0.01;
     camera.pinchDeltaPercentage = 0.01;
     camera.minZ = 0.001;

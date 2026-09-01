@@ -418,6 +418,12 @@ details > summary.tree-row::-webkit-details-marker {
     outline-offset: -2px;
 }
 
+/* Set by scene.ts when focus came from a pointer — orbiting the model is not a
+   moment where a focus ring helps anyone. */
+#renderCanvas.pointer-focus:focus-visible {
+    outline: none;
+}
+
 input[type='range']:disabled {
     opacity: 0.45;
     cursor: not-allowed;
