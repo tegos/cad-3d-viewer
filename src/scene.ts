@@ -10,6 +10,12 @@ import { CubeTexture } from '@babylonjs/core/Materials/Textures/cubeTexture';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import '@babylonjs/core/Helpers/sceneHelpers';
+// Babylon 9 split Ray into a pure core plus a side-effect module that patches
+// Scene.pick/createPickingRay onto the prototype. Without this import every
+// scene.pick() returns hit=false and the engine logs "Ray needs to be imported
+// before as it contains a side-effect required by your code" — hover
+// highlighting, face selection and measure all silently stop working.
+import '@babylonjs/core/Culling/ray';
 import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 
 export interface SceneBundle {
