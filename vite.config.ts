@@ -19,18 +19,26 @@ export default defineConfig(() => ({
     },
     plugins: [
         viteStaticCopy({
+            // vite-plugin-static-copy 4 stopped flattening: without
+            // `rename.stripBase` a target lands at
+            // dist/<dest>/node_modules/<pkg>/dist/<file> instead of
+            // dist/<dest>/<file>, which shipped a site whose worker 404s on
+            // importScripts(). tools/verify-dist.mjs guards the regression.
             targets: [
                 {
                     src: 'node_modules/occt-import-js/dist/occt-import-js.wasm',
                     dest: 'occt-import-js',
+                    rename: { stripBase: true },
                 },
                 {
                     src: 'node_modules/occt-import-js/dist/occt-import-js.js',
                     dest: 'occt-import-js',
+                    rename: { stripBase: true },
                 },
                 {
                     src: 'node_modules/comlink/dist/umd/comlink.js',
                     dest: 'comlink',
+                    rename: { stripBase: true },
                 },
                 // occt-import-js is LGPL-2.1 and OCCT itself is LGPL-2.1 with
                 // the Open CASCADE exception; both require the license to
@@ -39,10 +47,12 @@ export default defineConfig(() => ({
                 {
                     src: 'node_modules/occt-import-js/dist/license.occt-import-js.txt',
                     dest: 'occt-import-js',
+                    rename: { stripBase: true },
                 },
                 {
                     src: 'node_modules/occt-import-js/dist/license.occt.txt',
                     dest: 'occt-import-js',
+                    rename: { stripBase: true },
                 },
             ],
         }),

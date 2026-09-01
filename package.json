@@ -32,7 +32,7 @@
     "scripts": {
         "dev": "vite",
         "typecheck": "tsc --noEmit",
-        "build": "tsc --noEmit && vite build",
+        "build": "tsc --noEmit && vite build && node tools/verify-dist.mjs",
         "preview": "vite preview"
     },
     "dependencies": {
