@@ -31,7 +31,7 @@ jobs:
       - run: npm run build  # runs tsc --noEmit first
       # Pull requests build and type-check but must not publish.
       - if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
