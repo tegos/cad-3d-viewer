@@ -218,7 +218,9 @@ refs.explodeSlider.addEventListener('input', () => {
     explode.setFactor(factor);
 });
 
-// Dev-only debug hook. `?debug=1` exposes the scene + engine on `window`.
+// Debug hook, live in production too: `?debug` exposes the scene + engine on
+// `window`. Unlike the inspector below there is no bundle cost to gate, and
+// having it on the deployed build is what makes a bug report reproducible.
 if (params.has('debug')) {
     (window as unknown as { __scene: typeof scene; __engine: typeof engine }).__scene = scene;
     (window as unknown as { __scene: typeof scene; __engine: typeof engine }).__engine = engine;
