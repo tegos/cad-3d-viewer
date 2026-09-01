@@ -7,23 +7,24 @@
 // branches and on `_scriptName`/`__filename` probes). importScripts() loads
 // it the way the upstream author tested it and avoids the whole class of
 // problems.
+//
+// This file must stay free of `import`/`export` statements. One of them turns
+// it into an ES module, and Vite's dev server then emits a trailing
+// `export {}` marker that a classic worker rejects with "Unexpected token
+// 'export'" — the worker dies before its first message and every load hangs on
+// the progress bar. Types therefore come from inline `import(...)` type
+// positions and from the ambient declarations in types/worker-globals.d.ts.
 
 /// <reference lib="webworker" />
-import type { OcctFormat, OcctReadParams, OcctResult } from './types/occt';
 
-declare const importScripts: (...urls: string[]) => void;
-declare const __BASE_URL__: string;
-declare const Comlink: typeof import('comlink');
-declare const occtimportjs: (opts?: { locateFile?: (p: string, prefix: string) => string }) => Promise<{
-    ReadStepFile: (b: Uint8Array, p: OcctReadParams | null) => OcctResult;
-    ReadIgesFile: (b: Uint8Array, p: OcctReadParams | null) => OcctResult;
-    ReadBrepFile: (b: Uint8Array, p: OcctReadParams | null) => OcctResult;
-}>;
+type OcctFormat = import('./types/occt').OcctFormat;
+type OcctReadParams = import('./types/occt').OcctReadParams;
+type OcctResult = import('./types/occt').OcctResult;
+type LoaderWorkerApi = import('./types/loader-worker').LoaderWorkerApi;
+type OcctModule = Awaited<ReturnType<typeof occtimportjs>>;
 
 const base = __BASE_URL__;
 importScripts(`${base}occt-import-js/occt-import-js.js`, `${base}comlink/comlink.js`);
-
-type OcctModule = Awaited<ReturnType<typeof occtimportjs>>;
 
 let modulePromise: Promise<OcctModule> | null = null;
 
@@ -53,7 +54,6 @@ async function readFile(
     }
 }
 
-const api = { readFile };
-export type LoaderWorkerApi = typeof api;
+const api: LoaderWorkerApi = { readFile };
 
 Comlink.expose(api);

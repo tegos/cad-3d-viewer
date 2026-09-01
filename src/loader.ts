@@ -2,7 +2,7 @@
 // WASM download only happens after the first user action.
 
 import * as Comlink from 'comlink';
-import type { LoaderWorkerApi } from './loader.worker';
+import type { LoaderWorkerApi } from './types/loader-worker';
 import type { OcctFormat, OcctReadParams, OcctResult } from './types/occt';
 
 // 90 MB practical ceiling. Upstream's 32-bit Emscripten heap caps STEP parsing
