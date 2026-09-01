@@ -31,8 +31,10 @@
     },
     "scripts": {
         "dev": "vite",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "typecheck": "tsc --noEmit",
-        "build": "tsc --noEmit && vite build",
+        "build": "tsc --noEmit && vite build && node tools/verify-dist.mjs",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -47,6 +49,7 @@
         "@types/node": "^26.4.0",
         "typescript": "^7.0.2",
         "vite": "^8.2.2",
-        "vite-plugin-static-copy": "^4.1.1"
+        "vite-plugin-static-copy": "^4.1.1",
+        "vitest": "^4.1.11"
     }
 }
