@@ -36,14 +36,14 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@babylonjs/core": "^7.39.0",
-        "@babylonjs/gui": "^7.39.0",
-        "@babylonjs/loaders": "^7.39.0",
+        "@babylonjs/core": "^9.23.0",
+        "@babylonjs/gui": "^9.23.0",
+        "@babylonjs/loaders": "^9.23.0",
         "comlink": "^4.4.2",
         "occt-import-js": "0.0.23"
     },
     "devDependencies": {
-        "@babylonjs/inspector": "^7.39.0",
+        "@babylonjs/inspector": "^9.23.0",
         "@types/node": "^22.20.1",
         "typescript": "^5.6.3",
         "vite": "^5.4.10",
