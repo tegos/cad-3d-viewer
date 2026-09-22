@@ -56,9 +56,14 @@ URL parameters:
 ## Limitations
 
 - STEP, IGES and BREP only. No STL, OBJ, glTF, Parasolid or native CAD formats.
-- 90 MB file ceiling, because the 32-bit Emscripten heap gives out somewhere
-  near 100 MB. The viewer bails a little earlier with an explicit message
-  instead of an OOM crash.
+- 90 MB upload ceiling, and **file size is not the real limit**. The parser is
+  a 32-bit Emscripten build capped at 2 GB of heap, and a dense assembly can
+  exhaust that from a much smaller file — a 40 MB, 2873-part STEP assembly
+  hits the ceiling. When that happens OCCT still reports success and returns a
+  full part tree with no triangles in it, so the viewer detects the empty
+  result and says so instead of rendering an empty scene. Load a sub-assembly
+  or a simplified export. Upstream tracks the cap in
+  [occt-import-js#59](https://github.com/kovacsv/occt-import-js/issues/59).
 - Single-threaded parsing. Large assemblies take as long as they take; there
   is no worker pool and no cancel button.
 - Exploded view needs a multi-part assembly. A single-part file has nothing to
