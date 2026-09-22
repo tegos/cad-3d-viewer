@@ -11,6 +11,7 @@ import {
     UnsupportedFormatError,
     OcctReadError,
     WorkerFailedError,
+    EmptyGeometryError,
     MAX_FILE_BYTES,
 } from './loader';
 import { buildModel, type BuiltModel } from './builder';
@@ -110,7 +111,8 @@ function reportLoadError(err: unknown): void {
         err instanceof FileTooLargeError ||
         err instanceof UnsupportedFormatError ||
         err instanceof OcctReadError ||
-        err instanceof WorkerFailedError
+        err instanceof WorkerFailedError ||
+        err instanceof EmptyGeometryError
     ) {
         toast(refs, err.message, 'error');
         return;

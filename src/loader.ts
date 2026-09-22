@@ -4,10 +4,14 @@
 import * as Comlink from 'comlink';
 import type { LoaderWorkerApi } from './types/loader-worker';
 import type { OcctFormat, OcctReadParams, OcctResult } from './types/occt';
+import { hasGeometry } from './utils/geometry-check';
 
-// 90 MB practical ceiling. Upstream's 32-bit Emscripten heap caps STEP parsing
-// somewhere around 100 MB — we bail a bit before that for a friendlier error
-// instead of an obscure OOM.
+// 90 MB hard stop, purely to keep the browser from choking on the upload
+// itself. It is NOT the point at which parsing starts to fail: the upstream
+// 32-bit Emscripten heap is capped at 2 GB, and a dense assembly can exhaust
+// that from a 40 MB file. See utils/geometry-check.ts — files well under this
+// limit can still come back with no geometry, and EmptyGeometryError is what
+// reports that.
 export const MAX_FILE_BYTES = 90 * 1024 * 1024;
 
 interface WorkerHandle {
@@ -89,6 +93,17 @@ export class OcctReadError extends Error {
     }
 }
 
+export class EmptyGeometryError extends Error {
+    constructor(public meshCount: number) {
+        super(
+            `Read ${meshCount} part(s) but none contained any geometry. ` +
+                'This usually means the assembly exhausted the 2 GB memory limit the WebAssembly ' +
+                'CAD parser runs under. Try a sub-assembly or a simplified export of the model.',
+        );
+        this.name = 'EmptyGeometryError';
+    }
+}
+
 export function detectFormat(filename: string): OcctFormat {
     const ext = filename.toLowerCase().split('.').pop() ?? '';
     if (ext === 'step' || ext === 'stp') return 'step';
@@ -117,6 +132,12 @@ export async function loadCadFile(
     // is broken — it stays up for the next load. Only killWorker() retires it.
     if (!result.success) {
         throw new OcctReadError();
+    }
+    // Checked before the caller builds a scene: an out-of-memory read reports
+    // success with a full node tree and no triangles in it, and silently
+    // rendering that empty tree looks like a broken viewer.
+    if (!hasGeometry(result)) {
+        throw new EmptyGeometryError(result.meshes.length);
     }
     return result;
 }
