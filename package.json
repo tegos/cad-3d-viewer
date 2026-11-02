@@ -45,11 +45,11 @@
         "occt-import-js": "0.0.23"
     },
     "devDependencies": {
-        "@babylonjs/inspector": "^9.23.0",
-        "@types/node": "^26.4.0",
+        "@babylonjs/inspector": "^9.30.0",
+        "@types/node": "^26.6.5",
         "typescript": "^7.0.2",
-        "vite": "^8.2.2",
+        "vite": "^8.3.4",
         "vite-plugin-static-copy": "^4.1.1",
-        "vitest": "^4.1.11"
+        "vitest": "^5.0.4"
     }
 }
